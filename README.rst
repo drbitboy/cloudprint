@@ -45,12 +45,21 @@ System setup (Ubuntu /etc/init.d/cloudprint)
 
 ::
 
-  sudo useradd -d /home/cloudprint cloudprint
-  sudo su - cloudprint
+  sudo su -
+
+  useradd -d /home/cloudprint -m cloudprint
+  apt-get install git python-daemon python-pip python-cups cups-pdf
+
+  su - cloudprint
+
   mkdir cloudprint
-  cd cloudprint
-  git clone https://github.com/drbitboy/cloudprint.git
+  git clone -b ubuntu_etc_init.d https://github.com/drbitboy/cloudprint.git
+  python cloudprint/cloudprint/cloudprint.py
+  Google username: ...@gmail.com 
+  Password: ...
+
   exit
-  sudo cp ~cloudprint/cloudprint/ubuntu_init_d_cloudprint /etc/init.d/cloudprint
-  sudo update-rc.d cloudprint defaults 99 01
-  sudo reboot
+
+  cp -p ~cloudprint/cloudprint/ubuntu_init_d_cloudprint /etc/init.d/cloudprint
+  update-rc.d cloudprint defaults 99 01
+  reboot
