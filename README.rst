@@ -39,3 +39,18 @@ Install
 ::
 
   pip install cloudprint
+
+System setup (Ubuntu /etc/init.d/cloudprint)
+---------------------------------------------------
+
+::
+
+  sudo useradd -d /home/cloudprint cloudprint
+  sudo su - cloudprint
+  mkdir cloudprint
+  cd cloudprint
+  git clone https://github.com/drbitboy/cloudprint.git
+  exit
+  sudo cp ~cloudprint/cloudprint/ubuntu_init_d_cloudprint /etc/init.d/cloudprint
+  sudo update-rc.d cloudprint defaults 99 01
+  sudo reboot
