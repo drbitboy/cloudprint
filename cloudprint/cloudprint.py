@@ -374,9 +374,10 @@ def wait_for_new_job(sasl_token):
     return msg()
 
 def usage():
-    print sys.argv[0] + ' [-d][-l][-h] [-p pid_file] [-a account_file]'
+    print sys.argv[0] + ' [-d][-l][-w][-h] [-p pid_file] [-a account_file]'
     print '-d\t\t: enable daemon mode (requires the daemon module)'
     print '-l\t\t: logout of the google account'
+    print '-w\t\t: Wait 20s for network resources on startup e.g. from /etc/init.d/ on boot'
     print '-p pid_file\t: path to write the pid to (default cloudprint.pid)'
     print '-a account_file\t: path to google account ident data (default ~/.cloudprintauth)'
     print '\t\t account_file format:\t <Google username>'
@@ -384,9 +385,10 @@ def usage():
     print '-h\t\t: display this help'
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], 'dlhp:a:')
+    opts, args = getopt.getopt(sys.argv[1:], 'dlwhp:a:')
     daemon = False
     logout = False
+    doWait = False
     pidfile = None
     authfile = None
     saslauthfile = None
@@ -400,6 +402,8 @@ def main():
         elif o == '-a':
             authfile = a
             saslauthfile = authfile+'.sasl'
+        elif o == '-w':
+            doWait = True
         elif o =='-h':
             usage()
             sys.exit()
@@ -443,6 +447,7 @@ def main():
           cpp.password = getpass.getpass()
 
     #try to login
+    if doWait: time.sleep(20)   ### N.B. A hardcoded timeout is a bad idea!
     while True:
         try:
             sync_printers(cups_connection, cpp)

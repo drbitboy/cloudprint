@@ -1,0 +1,93 @@
+#!/bin/bash
+# /etc/init.d/cloudprint
+# Description: Starts the Google Cloud Print script on startup
+# ----------------
+#
+### BEGIN INIT INFO
+# Provides: Cloud-Print
+# Required-Start: $cups $network $local_fs $syslog
+# Required-Stop: $local_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Description: Start Google Cloud Print
+### END INIT INFO
+
+CPNAME="cloudprint"
+CPUSER="$CPNAME"
+CPHOME="/home/$CPUSER"
+DIR="$CPHOME/$CPNAME/$CPNAME"
+PFX="$DIR/$CPNAME"
+EXE="$PFX.py"
+PIDFILE="$PFX.pid"
+AUTH1="$CPHOME/.${CPNAME}auth"
+AUTH2="$AUTH1.sasl"
+CP_OPTS="-w -d -p $PIDFILE -a $AUTH1"
+QORV=--quiet
+xQORV=--verbose
+
+set -e
+
+elog() {
+  ( /bin/date | tr \\n ' ' ; echo $* ) \
+  1>>/tmp/cloudprint.log 2>>/tmp/cloudprint.err
+}
+
+test -x "$EXE" || exit 0
+test -f "$AUTH1" || exit 0
+test -r "$AUTH1" || exit 0
+test -f "$AUTH2" || exit 0
+test -r "$AUTH2" || exit 0
+( "$EXE" -h 2>&1 | grep -q '/cloudprint.py.*-h' ) 2>/dev/null || exit 0
+
+umask 022
+
+if test -f "/etc/default/$CPNAME"; then
+    . "/etc/default/$CPNAME"
+fi
+
+. /lib/lsb/init-functions
+
+if [ -n "$2" ]; then
+    CP_OPTS="$CP_OPTS $2"
+fi
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin:/usr/bin:/bin"
+
+case "$1" in
+  start)
+	log_daemon_msg "Starting $CPNAME server; options=$CP_OPTS" "$CPNAME" || true
+	if start-stop-daemon --start $QORV --oknodo --chuid "$CPNAME" --group "$CPNAME" --exec "$EXE" -- $CP_OPTS; then
+	    log_end_msg 0 || true
+	else
+	    log_end_msg 1 || true
+	fi
+	;;
+  stop)
+	log_daemon_msg "Stopping $CPNAME server" "$CPNAME" || true
+	if start-stop-daemon --stop $QORV --oknodo --pidfile "$PIDFILE"; then
+	    log_end_msg 0 || true
+	else
+	    log_end_msg 1 || true
+	fi
+	;;
+
+  restart)
+	log_daemon_msg "Restarting $CPNAME server; options=$CP_OPTS" "$CPNAME" || true
+	start-stop-daemon --stop $QORV --oknodo --retry 30 --pidfile "$PIDFILE"
+	if start-stop-daemon --start $QORV --oknodo --chuid "$CPNAME" --group "$CPNAME" --exec "$EXE" -- $CP_OPTS; then
+	    log_end_msg 0 || true
+	else
+	    log_end_msg 1 || true
+	fi
+	;;
+
+  status)
+	status_of_proc -p "$PIDFILE" "$EXE" "$CPNAME" && exit 0 || exit $?
+	;;
+
+  *)
+	log_action_msg "Usage: /etc/init.d/$CPNAME {start|stop|reload|force-reload|restart|try-restart|status}" || true
+	exit 1
+esac
+
+exit 0
